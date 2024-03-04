@@ -43,7 +43,7 @@ def init() -> None:
     config = dict_s2['config']
     hps = DictToAttrRecursive(config)
     print(hps)
-    is_half = eval(os.environ.get("is_half", "True")) and not torch.backends.mps.is_available()
+    is_half = eval(os.environ.get("IS_HALF", "True")) and not torch.backends.mps.is_available()
     if torch.cuda.is_available():
         device = "cuda"
     elif torch.backends.mps.is_available():
