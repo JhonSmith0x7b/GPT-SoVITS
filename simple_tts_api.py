@@ -22,6 +22,7 @@ import soundfile as sf
 import flask
 import io
 import gc
+import requests
 
 
 def init() -> None:
@@ -47,7 +48,7 @@ def init() -> None:
     if torch.cuda.is_available():
         device = "cuda"
     elif torch.backends.mps.is_available():
-        device = "mps"
+        device = "cpu"
     else:
         device = "cpu"
     print(device)
@@ -200,14 +201,14 @@ def cut2(inp):
     for i in range(len(inps)):
         summ += len(inps[i])
         tmp_str += inps[i]
-        if summ > 50:
+        if summ > 20:
             summ = 0
             opts.append(tmp_str)
             tmp_str = ""
     if tmp_str != "":
         opts.append(tmp_str)
     # print(opts)
-    if len(opts) > 1 and len(opts[-1]) < 50:  ##如果最后一个太短了，和前一个合一起
+    if len(opts) > 1 and len(opts[-1]) < 20:  ##如果最后一个太短了，和前一个合一起
         opts[-2] = opts[-2] + opts[-1]
         opts = opts[:-1]
     return "\n".join(opts)
@@ -215,6 +216,7 @@ def cut2(inp):
 
 def cut3(inp):
     inp = inp.strip("\n")
+    inp = inp.replace(".", "。")
     return "\n".join(["%s" % item for item in inp.strip("。").split("。")])
 
 
@@ -463,13 +465,14 @@ app = flask.Flask(__name__)
 @app.get("/simple-tts")
 def simple_tts() -> flask.Response:
     text = flask.request.args.get('text', default='', type=str)  # Add 'text' argument
+    text = requests.utils.unquote(text)
     result = get_tts_wav(
         ref_wav_path,
         ref_wav_txt,
         i18n("中文"),
         text,  # Use the 'text' argument
         i18n("中英混合"),
-        "不切",
+        i18n("凑50字一切"),
         20, 
         0.6,
         0.6,
